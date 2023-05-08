@@ -7,8 +7,8 @@ services:
       DB_VENDOR: MYSQL
       DB_ADDR: mysql
       DB_PORT: 3306
-      DB_DATABASE: keycloak
-      DB_USER: keycloak
+      DB_DATABASE: node_auth
+      DB_USER: app
       DB_PASSWORD: password
     ports:
       - 8080:8080
@@ -21,8 +21,8 @@ services:
   mysql:
     image: mysql:latest
     environment:
-      MYSQL_DATABASE: keycloak
-      MYSQL_USER: keycloak
+      MYSQL_DATABASE: node_auth
+      MYSQL_USER: app
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: root
     ports:
@@ -40,9 +40,6 @@ services:
       POST: 4000
       DATABASE_URL: mysql://keycloak:password@mysql:3306/keycloak
       KEYCLOAK_URL: http://keycloak:8080/auth
-      KEYCLOAK_REALM: realm1
-      KEYCLOAK_CLIENT_ID: node-app
-      KEYCLOAK_CLIENT_SECRET: c83a424a-0d7e-4e15-8b2e-89d87f05ab20
     volumes:
       - ./app:/app
     working_dir: /app
