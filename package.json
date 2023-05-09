@@ -4,7 +4,7 @@
   "description": "this is an example of keycloak with node js/express",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app/server.js"
   },
   "author": "",
   "license": "ISC",

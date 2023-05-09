@@ -8,8 +8,8 @@ RUN npm ci
 
 COPY . .
 
-ENV SERVER_POST 3000
+ENV SERVER_PORT 3000
 
-EXPOSE $SERVER_POST
+EXPOSE $SERVER_PORT
 
 CMD [ "npm" ,"run", "start" ]
