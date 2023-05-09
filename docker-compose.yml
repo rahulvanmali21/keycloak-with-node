@@ -1,45 +1,52 @@
 version: "3.9"
 
 services:
-  keycloak:
-    image: quay.io/keycloak/keycloak
-    environment:
-      DB_VENDOR: MYSQL
-      DB_ADDR: mysql
-      DB_PORT: 3306
-      DB_DATABASE: node_auth
-      DB_USER: app
-      DB_PASSWORD: password
-    ports:
-      - 8080:8080
-      - 8443:8443
-    depends_on:
-      - mysql
-    networks:
-      - app-network
 
   mysql:
     image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
     environment:
-      MYSQL_DATABASE: node_auth
+      MYSQL_DATABASE: node_auth_app
       MYSQL_USER: app
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: root
     ports:
       - 3306:3306
     volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - app-network
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - $HOME/database:/var/lib/mysql
+
+  keycloak:
+    image: quay.io/keycloak/keycloak
+
+    environment:
+        DB_VENDOR: MYSQL
+        DB_ADDR: mysql
+        DB_DATABASE: node_auth_app
+        DB_USER: app
+        DB_PASSWORD: password
+        KEYCLOAK_ADMIN: admin
+        KEYCLOAK_ADMIN_PASSWORD: admin@123
+    command: ["start-dev"]
+    ports:
+      - 8080:8080
+    depends_on:
+      - mysql
+
+
+
+
+
 
   node_app:
     build: .
     ports:
       - 4000:3000
     environment:
-      POST: 4000
-      DATABASE_URL: mysql://keycloak:password@mysql:3306/keycloak
+      DATABASE_URL: mysql://app:password@mysql:3306/node_auth_app
       KEYCLOAK_URL: http://keycloak:8080/auth
+      SERVER_PORT: 3000
     volumes:
       - ./app:/app
     working_dir: /app
@@ -47,11 +54,3 @@ services:
     depends_on:
       - keycloak
       - mysql
-    networks:
-      - app-network
-
-volumes:
-  mysql_data:
-
-networks:
-  app-network:
