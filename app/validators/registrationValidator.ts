@@ -9,7 +9,7 @@ const validator = [
       // Check if a user with the same username already exists
       const user = await prisma.user.findFirst({ where: { username: value } });
       if (user) {
-        throw new Error("Email already exists");
+        throw new Error("username already exists");
       }
       return true;
     }),
