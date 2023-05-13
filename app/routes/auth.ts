@@ -24,9 +24,11 @@ authRoute.post(
       const { username, first_name, last_name, email, password } = body;
 
       // create user in keycloak
+      const token = await getAdminAccessToken();
 
+      const url = `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users`;
       const kc_response = await axios.post(
-        `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users`,
+        url,
         {
           username,
           email,
@@ -42,13 +44,13 @@ authRoute.post(
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${await getAdminAccessToken()}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
       // create user
-      prisma.user.create({
+      await prisma.user.create({
         data: {
           username,
           first_name,
@@ -57,9 +59,10 @@ authRoute.post(
         },
       });
 
-    } catch (error) {
+      return response.status(201).json({ msg: "success" });
+    } catch (error: any) {
       // handling error
-      console.log(error);
+      return response.send(error);
     }
   }
 );
