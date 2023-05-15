@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import prisma from "../../prisma";
 import { validationResult } from "express-validator";
 import VALIDATOR from "../validators/registrationValidator";
-import { getAdminAccessToken } from "../keycloak";
+import { getAdminAccessToken } from "../keycloak-admin";
 import axios from "axios";
 
 export const authRoute = Router();
