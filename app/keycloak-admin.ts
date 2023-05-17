@@ -16,7 +16,7 @@ export const getAdminAccessToken = async () => {
       },
     });
     token = response.data.access_token;
-    cache.set("access_token", token);
+    cache.set("access_token", token, 60 * 5);
   }
   return token;
 };
