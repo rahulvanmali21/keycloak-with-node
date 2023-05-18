@@ -4,7 +4,6 @@ import { validationResult } from "express-validator";
 import VALIDATOR from "../validators/registrationValidator";
 import { getAdminAccessToken } from "../keycloak-admin";
 import axios from "axios";
-import { verifyJWT } from "../keycloak-client";
 
 export const authRoute = Router();
 
@@ -28,7 +27,7 @@ authRoute.post(
       const token = await getAdminAccessToken();
 
       const url = `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users`;
-      const kc_response = await axios.post(
+      await axios.post(
         url,
         {
           username,
@@ -96,23 +95,25 @@ authRoute.post("/login", async (request: Request, response: Response) => {
 });
 
 // keycloak rest-api logout
-authRoute.post("/logout", async (request: Request, response: Response) => {
-  const accessToken = request.headers.authorization;
-  if (!accessToken) {
-    return response.json({status:400}).status(400);
+authRoute.post(
+  "/logout",
+  async (request: Request, response: Response, next) => {
+    const accessToken = request.headers.authorization;
+    if (!accessToken) {
+      return response.json({ status: 400 }).status(400);
+    }
+    try {
+      const revokeTokenUrl = `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/logout`;
+      await axios.post(revokeTokenUrl, null, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      return response.json({ status: 200 }).status(200);
+    } catch (error) {
+      return response.json({ status: 500, error }).status(500);
+    }
   }
-  try {
-    const revokeTokenUrl = `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/logout`;
-    await axios.post(revokeTokenUrl, null, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    return response.json({status:200}).status(200);
-
-  } catch (error) {
-    return response.json({status:500,error}).status(500);
-  }
-});
+);
 
