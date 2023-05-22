@@ -2,7 +2,7 @@ import { Router, Request, Response, response } from "express";
 import prisma from "../../prisma";
 import { body, validationResult } from "express-validator";
 import registrationValidator from "../validators/registration-validator";
-import resetPasswordValidator from "../validators/reset-password-validator"
+import resetPasswordValidator from "../validators/reset-password-validator";
 import { getAdminAccessToken, getUserByEmail } from "../keycloak-admin";
 import axios from "axios";
 import { keycloakProtect } from "../middlewares/keycloakProtect";
@@ -101,25 +101,39 @@ route.post("/login", async (request: Request, response: Response) => {
 // keycloak rest-api logout
 route.post(
   "/logout",
-  async (request: Request, response: Response, next) => {
-    const accessToken = request.headers.authorization;
-    if (!accessToken) {
-      return response.json({ status: 400 }).status(400);
-    }
+  keycloakProtect,
+  async (request: any, response: Response, next) => {
+    const userInfo = request.userInfo;
     try {
-      const revokeTokenUrl = `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/logout`;
-      await axios.post(revokeTokenUrl, null, {
+      const accessToken = (await getAdminAccessToken()) ?? "";
+
+      const revokeTokenUrl = `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${userInfo.sub}/logout`;
+      const res = await axios.post(revokeTokenUrl, null, {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      return response.json({ status: 200 }).status(200);
+      if (res.status === 204) {
+        // Successful logout
+        return response.sendStatus(204);
+      } else {
+        // Error occurred during logout
+        return response.status(res.status).json(res.data);
+      }
     } catch (error) {
       return response.json({ status: 500, error }).status(500);
     }
   }
 );
+
+// keycloak backend channel logout
+
+route.post("/logout-event", (req, res) => {
+  console.log(req);
+  console.log("here");
+  return res.status(200).json({ status: 200 });
+});
 
 // update password
 route.post(
@@ -156,25 +170,23 @@ route.post(
   }
 );
 
-
 // forgot password
 
-route.post("/forgot-password",(request:Request,response:Response)=>{
+route.post("/forgot-password", (request: Request, response: Response) => {
   try {
-    const expiresInHours = 24; 
-    const secretKey = 'your_secret_key';
+    const expiresInHours = 24;
+    const secretKey = "your_secret_key";
     const email = request.body;
     // check if email exist
     const token = jwt.sign({ email }, secretKey, {
       expiresIn: expiresInHours * 60 * 60,
     });
-  
-    const url = `${process.env.FRONTEND_URL}?token=${token}`
-  
+
+    const url = `${process.env.FRONTEND_URL}?token=${token}`;
+
     return response.json({ status: 200 }).status(200);
   } catch (error) {
     return response.json({ status: 500 }).status(400);
-
   }
 });
 
@@ -186,10 +198,10 @@ route.put(
     try {
       const { password } = request.body;
       const token: any = request?.query.token;
-      const secretKey = 'your_secret_key';
-      const decoded:any = jwt.verify(token, secretKey);
+      const secretKey = "your_secret_key";
+      const decoded: any = jwt.verify(token, secretKey);
       const email = decoded?.email;
-      const userId = await getUserByEmail(email)
+      const userId = await getUserByEmail(email);
       const url = `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${userId}`;
 
       const access_token = await getAdminAccessToken();

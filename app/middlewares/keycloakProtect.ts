@@ -18,7 +18,7 @@ export const keycloakProtect =async(request:any,response:any,next:any)=>{
         
     } catch (error:any) {
         if(error.name==="TokenExpiredError"){
-            return response.status(401).json({message:"access_token invalid"});
+            return response.status(401).json({message:"access_token invalidss"});
         }
         return  response.status(403).json({message:"access_token invalid"});
     }
