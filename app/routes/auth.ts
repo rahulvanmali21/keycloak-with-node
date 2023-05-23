@@ -130,8 +130,6 @@ route.post(
 // keycloak backend channel logout
 
 route.post("/logout-event", (req, res) => {
-  console.log(req);
-  console.log("here");
   return res.status(200).json({ status: 200 });
 });
 
@@ -171,7 +169,6 @@ route.post(
 );
 
 // forgot password
-
 route.post("/forgot-password", (request: Request, response: Response) => {
   try {
     const expiresInHours = 24;
@@ -260,5 +257,35 @@ route.get("/verify-email", async (request: Request, response) => {
     return response.json({ status: 200 }).status(200);
   } catch (error) {
     return response.json({ status: 500 }).status(500);
+  }
+});
+
+// get token using refresh token
+route.post("/token", async (request: Request, response: Response) => {
+  const refresh_token = request.body.refresh_token;
+
+  if (!refresh_token) {
+    return response.sendStatus(403);
+  }
+  try {
+    const url = `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_CLIENT_ID}/protocol/openid-connect/token`;
+
+    const { data } = await axios.post(
+      url,
+      {
+        grant_type: "refresh_token",
+        client_id: process.env.KEYCLOAK_CLIENT_ID ?? "",
+        client_secret: process.env.KEYCLOAK_CLIENT_SECRET ?? "",
+        refresh_token,
+      },
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+    response.json({ data });
+  } catch (error) {
+    response.status(500).json({ error: 'Failed to refresh token' });
   }
 });
