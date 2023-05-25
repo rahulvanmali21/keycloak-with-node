@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { verifyJWTOffline } from "../keycloak-client";
+import { verifyJWTOffline } from "../services/keycloak-client";
 
 
 export interface AuthenticateRequest extends Request {

@@ -3,7 +3,7 @@ import prisma from "../../prisma";
 import { body, validationResult } from "express-validator";
 import registrationValidator from "../validators/registration-validator";
 import resetPasswordValidator from "../validators/reset-password-validator";
-import { getAdminAccessToken, getUserByEmail } from "../keycloak-admin";
+import { getAdminAccessToken, getUserByEmail } from "../services/keycloak-admin";
 import axios from "axios";
 import { keycloakProtect } from "../middlewares/keycloakProtect";
 import jwt from "jsonwebtoken";
