@@ -7,6 +7,7 @@ import { getAdminAccessToken, getUserByEmail } from "../services/keycloak-admin"
 import axios from "axios";
 import { keycloakProtect } from "../middlewares/keycloakProtect";
 import jwt from "jsonwebtoken";
+import emailValidator from "@validators/email-exist-validator";
 
 export const route = Router();
 
@@ -287,5 +288,42 @@ route.post("/token", async (request: Request, response: Response) => {
     response.json({ data });
   } catch (error) {
     response.status(500).json({ error: 'Failed to refresh token' });
+  }
+});
+
+
+route.post('/login/magiclink',emailValidator ,async (request:Request, response:Response) => {
+  try {
+    const email = request.body.email; 
+
+
+
+    const kcresponse = await axios.post(
+      `${process.env.KEYCLOAK_URL}/auth/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
+      null,
+      {
+        params: {
+          grant_type: 'password',
+          client_id: process.env.KEYCLOAK_CLIENT_ID,
+          username: email,
+          password: 'magic-link',
+        },
+      }
+    );
+
+    // Check the response status and send the magic link via email
+    if (kcresponse.status === 200) {
+      const accessToken = kcresponse.data.access_token;
+
+     const url =  `${process.env.FRONTEND_APP_URL}/login/magiclink?token=${accessToken}`;
+      // send  email
+
+
+    } else {
+      return response.status(500).json({ error: 'Failed to send magic link email' });
+    }
+  } catch (error) {
+    console.error(error);
+    return response.status(500).json({ error: 'Failed to send magic link email' });
   }
 });
